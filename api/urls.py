@@ -6,6 +6,7 @@ urlpatterns = [
     path("auth/register/", views.registerUser, name="register"),
     path("auth/login/", views.loginUser, name="login"),
     path("auth/logout/", views.logoutUser, name="logout"),
+    path("search/", views.searchNotes, name="search-note"),
     path("notes/", views.getNotes, name="notes"),
     path("notes/create", views.createNote, name="create-note"),
     path("notes/<str:pk>", views.getNote, name="get-note"),

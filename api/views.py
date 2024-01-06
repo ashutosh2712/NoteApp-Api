@@ -3,7 +3,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from rest_framework import status
-from rest_framework.decorators import api_view
+from rest_framework.authtoken.models import Token
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from .models import Note
 from .serializers import NoteSerializer
@@ -16,6 +18,7 @@ def getroutes(request):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def registerUser(request):
     if request.method == "POST":
         username = request.data.get("username")
@@ -52,8 +55,11 @@ def loginUser(request):
 
         if user is not None:
             login(request, user)
+            token, created = Token.objects.get_or_create(user=user)
+            print(token)
             return Response(
-                {"success": "User logged in successfully"}, status=status.HTTP_200_OK
+                {"token": token.key, "success": "User logged in successfully"},
+                status=status.HTTP_200_OK,
             )
         else:
             return Response(
@@ -73,6 +79,7 @@ def logoutUser(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getNotes(request):
     if request.method == "GET":
         user = request.user
@@ -82,6 +89,7 @@ def getNotes(request):
 
 
 @api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def getNote(request, pk):
     if request.method == "GET":
         try:
@@ -95,6 +103,7 @@ def getNote(request, pk):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def createNote(request):
     if request.method == "POST":
         data = request.data
@@ -105,6 +114,7 @@ def createNote(request):
 
 
 @api_view(["PUT"])
+@permission_classes([IsAuthenticated])
 def updateNote(request, pk):
     if request.method == "PUT":
         data = request.data
@@ -124,6 +134,7 @@ def updateNote(request, pk):
 
 
 @api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
 def deleteNote(request, pk):
     try:
         note = Note.objects.get(id=pk)
@@ -137,6 +148,7 @@ def deleteNote(request, pk):
 
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def shareNote(request, pk):
     try:
         note = Note.objects.get(id=pk)
@@ -148,5 +160,17 @@ def shareNote(request, pk):
     note.shared_with.add(shared_with_user_id)
 
     serializer = NoteSerializer(note)
+
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def searchNotes(request):
+    user = request.user
+    search_query = request.query_params.get("q", "")
+    notes = Note.objects.filter(user=user, body__icontains=search_query)
+
+    serializer = NoteSerializer(notes, many=True)
 
     return Response(serializer.data)
