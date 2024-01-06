@@ -97,3 +97,16 @@ def createNote(request):
         note = Note.objects.create(body=data["body"], user=user)
         serializer = NoteSerializer(note, many=False)
         return Response(serializer.data)
+
+
+@api_view(["PUT"])
+def updateNote(request, pk):
+    if request.method == "PUT":
+        data = request.data
+        notes = Note.objects.get(id=pk)
+        serializer = NoteSerializer(instance=notes, data=data)
+
+        if serializer.is_valid():
+            serializer.save()
+
+        return Response(serializer.data)
