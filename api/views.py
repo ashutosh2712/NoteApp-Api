@@ -84,7 +84,12 @@ def getNotes(request):
 @api_view(["GET"])
 def getNote(request, pk):
     if request.method == "GET":
-        notes = Note.objects.get(id=pk)
+        try:
+            notes = Note.objects.get(id=pk)
+        except Note.DoesNotExist():
+            return Response(
+                {"error": "Note Dosnt exists!"}, status=status.HTTP_404_NOT_FOUND
+            )
         serializer = NoteSerializer(notes, many=False)
         return Response(serializer.data)
 
@@ -103,7 +108,13 @@ def createNote(request):
 def updateNote(request, pk):
     if request.method == "PUT":
         data = request.data
-        notes = Note.objects.get(id=pk)
+        try:
+            notes = Note.objects.get(id=pk)
+        except Note.DoesNotExist():
+            return Response(
+                {"error": "Note Dosnt exists!"}, status=status.HTTP_404_NOT_FOUND
+            )
+
         serializer = NoteSerializer(instance=notes, data=data)
 
         if serializer.is_valid():
@@ -114,7 +125,28 @@ def updateNote(request, pk):
 
 @api_view(["DELETE"])
 def deleteNote(request, pk):
-    notes = Note.objects.get(id=pk)
-    notes.delete()
+    try:
+        note = Note.objects.get(id=pk)
+    except Note.DoesNotExist():
+        return Response(
+            {"error": "Note Dosnt exists!"}, status=status.HTTP_404_NOT_FOUND
+        )
+    note.delete()
 
     return Response("Note Deleted!")
+
+
+@api_view(["POST"])
+def shareNote(request, pk):
+    try:
+        note = Note.objects.get(id=pk)
+    except Note.DoesNotExist():
+        return Response(
+            {"error": "Note Dosnt exists!"}, status=status.HTTP_404_NOT_FOUND
+        )
+    shared_with_user_id = request.data.get("shared_with_user_id")
+    note.shared_with.add(shared_with_user_id)
+
+    serializer = NoteSerializer(note)
+
+    return Response(serializer.data)
