@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.db import IntegrityError
 from rest_framework import status
@@ -53,4 +53,14 @@ def loginUser(request):
     else:
         return Response(
             {"error": "Wrong credential!Try again"}, status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
+@api_view(["POST"])
+def logoutUser(request):
+    if request.method == "POST":
+        logout(request)
+
+        return Response(
+            {"success": "User loged out successfully!"}, status=status.HTTP_200_OK
         )
