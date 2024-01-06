@@ -87,3 +87,13 @@ def getNote(request, pk):
         notes = Note.objects.get(id=pk)
         serializer = NoteSerializer(notes, many=False)
         return Response(serializer.data)
+
+
+@api_view(["POST"])
+def createNote(request):
+    if request.method == "POST":
+        data = request.data
+        user = request.user
+        note = Note.objects.create(body=data["body"], user=user)
+        serializer = NoteSerializer(note, many=False)
+        return Response(serializer.data)
